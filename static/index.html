@@ -1,14 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Insight Engine | AI Research Platform</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
+
 <body>
     <header>
         <h1>Insight Engine</h1>
@@ -66,7 +68,7 @@
             const loader = document.getElementById(loaderId);
             const btn = loader?.parentElement;
             if (loader) loader.style.display = 'inline-block';
-            
+
             try {
                 const response = await fetch(`${API_BASE}${endpoint}`, {
                     method: 'POST',
@@ -98,10 +100,10 @@
         document.getElementById('searchBtn').onclick = async () => {
             const query = document.getElementById('queryInput').value;
             const res = await handleAction(`/search?query=${encodeURIComponent(query)}`, {});
-            
+
             const container = document.getElementById('resultsContainer');
             container.innerHTML = '<h2>Top Semantic Matches</h2>';
-            
+
             res.results.forEach(r => {
                 const div = document.createElement('div');
                 div.className = 'result-item';
@@ -117,7 +119,7 @@
         document.getElementById('askBtn').onclick = async () => {
             const query = document.getElementById('queryInput').value;
             const res = await handleAction(`/ask?query=${encodeURIComponent(query)}`, {});
-            
+
             const container = document.getElementById('resultsContainer');
             container.innerHTML = `
                 <h2>Synthesized Answer</h2>
@@ -126,11 +128,11 @@
                 </div>
                 <h2>Supporting Context</h2>
             `;
-            
+
             // Optionally pull semantic results too for transparency
             const searchRes = await fetch(`/search?query=${encodeURIComponent(query)}`, { method: 'POST' });
             const searchData = await searchRes.json();
-            
+
             searchData.results.forEach(r => {
                 const div = document.createElement('div');
                 div.className = 'result-item';
@@ -143,4 +145,5 @@
         };
     </script>
 </body>
+
 </html>
