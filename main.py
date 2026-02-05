@@ -7,6 +7,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
 import os
@@ -102,6 +103,15 @@ def answer_question(query: str, context_chunks: list):
 
 # 5. API Layer (FastAPI)
 app = FastAPI(title="Research Platform API")
+
+# Add CORS Middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Mount static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
