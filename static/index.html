@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insight Engine | AI Research Platform</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <h1>Insight Engine</h1>
+        <p>Transforming Unstructured Research into Actionable Intelligence</p>
+    </header>
+
+    <main>
+        <!-- Ingestion Column -->
+        <section class="ingestion-section">
+            <div class="card">
+                <h2>📥 Ingest Document</h2>
+                <div class="form-group">
+                    <label for="sourceName">Source Name (e.g. Apple_10K.pdf)</label>
+                    <input type="text" id="sourceName" placeholder="Enter source filename...">
+                </div>
+                <div class="form-group">
+                    <label for="docText">Document Text</label>
+                    <textarea id="docText" rows="12" placeholder="Paste report text here..."></textarea>
+                </div>
+                <button id="ingestBtn">
+                    <span>Process & Index</span>
+                    <div class="loader" id="ingestLoader"></div>
+                </button>
+                <div id="ingestStatus" style="margin-top: 1rem; font-size: 0.875rem;"></div>
+            </div>
+        </section>
+
+        <!-- Search & Ask Column -->
+        <section class="query-section">
+            <div class="card" style="margin-bottom: 2rem;">
+                <h2>🔍 Research & Query</h2>
+                <div class="form-group">
+                    <input type="text" id="queryInput" placeholder="Ask a question or search themes...">
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button id="askBtn" style="background: linear-gradient(to right, #10b981, #3b82f6);">
+                        <span>Ask AI (RAG)</span>
+                    </button>
+                    <button id="searchBtn">
+                        <span>Semantic Search</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="resultsContainer" class="results-area">
+                <!-- Dynamic results will appear here -->
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const API_BASE = "";
+
+        async function handleAction(endpoint, body, loaderId, outputId) {
+            const loader = document.getElementById(loaderId);
+            const btn = loader?.parentElement;
+            if (loader) loader.style.display = 'inline-block';
+            
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await response.json();
+                return data;
+            } catch (err) {
+                console.error(err);
+                alert("Request failed. Check console.");
+            } finally {
+                if (loader) loader.style.display = 'none';
+            }
+        }
+
+        // Ingest Logic
+        document.getElementById('ingestBtn').onclick = async () => {
+            const text = document.getElementById('docText').value;
+            const source = document.getElementById('sourceName').value;
+            if (!text || !source) return alert("Fill all fields");
+
+            const res = await handleAction('/ingest', { text, source }, 'ingestLoader');
+            document.getElementById('ingestStatus').innerText = res.message;
+            document.getElementById('docText').value = "";
+        };
+
+        // Search Logic
+        document.getElementById('searchBtn').onclick = async () => {
+            const query = document.getElementById('queryInput').value;
+            const res = await handleAction(`/search?query=${encodeURIComponent(query)}`, {});
+            
+            const container = document.getElementById('resultsContainer');
+            container.innerHTML = '<h2>Top Semantic Matches</h2>';
+            
+            res.results.forEach(r => {
+                const div = document.createElement('div');
+                div.className = 'result-item';
+                div.innerHTML = `
+                    <span class="source-tag">${r.source}</span>
+                    <p>${r.content}</p>
+                `;
+                container.appendChild(div);
+            });
+        };
+
+        // Ask AI Logic
+        document.getElementById('askBtn').onclick = async () => {
+            const query = document.getElementById('queryInput').value;
+            const res = await handleAction(`/ask?query=${encodeURIComponent(query)}`, {});
+            
+            const container = document.getElementById('resultsContainer');
+            container.innerHTML = `
+                <h2>Synthesized Answer</h2>
+                <div class="answer-box">
+                    ${res.answer.replace(/\n/g, '<br>')}
+                </div>
+                <h2>Supporting Context</h2>
+            `;
+            
+            // Optionally pull semantic results too for transparency
+            const searchRes = await fetch(`/search?query=${encodeURIComponent(query)}`, { method: 'POST' });
+            const searchData = await searchRes.json();
+            
+            searchData.results.forEach(r => {
+                const div = document.createElement('div');
+                div.className = 'result-item';
+                div.innerHTML = `
+                    <span class="source-tag">${r.source}</span>
+                    <p>${r.content}</p>
+                `;
+                container.appendChild(div);
+            });
+        };
+    </script>
+</body>
+</html>
